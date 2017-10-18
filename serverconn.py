@@ -105,6 +105,10 @@ def subprocess_cmd(command):
 configuration = get_configuration()
 
 if len(sys.argv) == 2:
+    # launch a clear if necessary
+    if configuration['clear_before_connect']:
+        call(['clear'])
+
     # try to connect to given server
     connect(sys.argv[1])
 else:
