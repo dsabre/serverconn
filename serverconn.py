@@ -81,7 +81,8 @@ def list_servers(numColumns):
         row = []
 
         for server in block['servers']:
-            row.append(str(server['id']) + " - " + server['host'])
+            serverLabel = server['alias'] if 'alias' in server else server['host']
+            row.append(str(server['id']) + " - " + serverLabel)
 
             if len(row) == numColumns:
                 rows.append(("\t" if numColumns == 1 else "") + ("|".join(row)))
