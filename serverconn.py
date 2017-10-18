@@ -3,17 +3,13 @@
 import json
 import os.path
 import sys
+import fnmatch
 import subprocess
 from subprocess import call
 
 DIR = os.path.dirname(__file__)
-SERVERS_FILE_NAME = DIR + "/servers.json"
+SERVERS_DIRECTORY = DIR + "/servers"
 CONFIGURATION_FILE_NAME = DIR + "/config.json"
-
-# check if server file exists
-if not os.path.isfile(SERVERS_FILE_NAME):
-    print SERVERS_FILE_NAME + " not found"
-    exit(1)
 
 # check if config file exists
 if not os.path.isfile(CONFIGURATION_FILE_NAME):
@@ -34,34 +30,41 @@ def get_configuration():
 # obtain the servers list
 def get_servers():
     i = 0
+    servers = []
 
-    with open(SERVERS_FILE_NAME, 'r') as data:
-        try:
-            data = json.load(data)
-        except ValueError:
-            print "Invalid json format"
-            exit(2)
+    for dirpath, dirnames, files in os.walk(SERVERS_DIRECTORY):
+        for f in fnmatch.filter(files, '*.json'):
+            with open(dirpath + '/' + f, 'r') as data:
+                try:
+                    data = json.load(data)
+                except ValueError:
+                    print "Invalid json format"
+                    exit(2)
 
-    for k, block in enumerate(data):
-        for l, server in enumerate(block['servers']):
-            i = i + 1
-            if 'id' not in server:
-                data[k]['servers'][l]['id'] = i
+            for k, block in enumerate(data):
+                for l, server in enumerate(block['servers']):
+                    i = i + 1
+                    if 'id' not in server:
+                        data[k]['servers'][l]['id'] = i
 
-    return data
+            servers.append(data)
+
+    return servers
 
 
 # obtain a server from its id
-def get_server(id):
-    for block in get_servers():
-        for server in block['servers']:
-            if str(server['id']) == str(id):
-                return server
+def get_server(servers, id):
+    for file in servers:
+        for block in file:
+            for server in block['servers']:
+                if str(server['id']) == str(id):
+                    return server
 
 
 # connect to a server
-def connect(id):
-    server = get_server(id)
+def connect(servers, id):
+    server = get_server(servers, id)
+
     try:
         if 'password' in server:
             call(["sshpass", "-p", server['password'], "ssh", "-o", "StrictHostKeyChecking=no", server['host']])
@@ -73,22 +76,23 @@ def connect(id):
 
 
 # print the servers table or list
-def list_servers(numColumns):
+def list_servers(servers, numColumns):
     rows = []
 
-    for block in get_servers():
-        rows.append("---\n" + block['label'])
-        row = []
+    for file in servers:
+        for block in file:
+            rows.append("---\n" + block['label'])
+            row = []
 
-        for server in block['servers']:
-            serverLabel = server['alias'] if 'alias' in server else server['host']
-            row.append(str(server['id']) + " - " + serverLabel)
+            for server in block['servers']:
+                serverLabel = server['alias'] if 'alias' in server else server['host']
+                row.append(str(server['id']) + " - " + serverLabel)
 
-            if len(row) == numColumns:
-                rows.append(("\t" if numColumns == 1 else "") + ("|".join(row)))
-                row = []
+                if len(row) == numColumns:
+                    rows.append(("\t" if numColumns == 1 else "") + ("|".join(row)))
+                    row = []
 
-        rows.append("|".join(row))
+            rows.append("|".join(row))
 
     print
     subprocess_cmd('echo "' + ("\n".join(rows)) + '" |column -t -s"|" |sed "s/---//g"')
@@ -104,6 +108,12 @@ def subprocess_cmd(command):
 
 # main actions
 configuration = get_configuration()
+servers = get_servers()
+
+# check if server files exists
+if len(servers) == 0:
+    print "No servers found"
+    exit(1)
 
 if len(sys.argv) == 2:
     # launch a clear if necessary
@@ -111,11 +121,11 @@ if len(sys.argv) == 2:
         call(['clear'])
 
     # try to connect to given server
-    connect(sys.argv[1])
+    connect(servers, sys.argv[1])
 else:
     # launch a clear if necessary
     if configuration['clear_before_list']:
         call(['clear'])
 
     # list servers
-    list_servers(configuration['num_table_columns'])
+    list_servers(servers, configuration['num_table_columns'])
