@@ -112,10 +112,5 @@ else:
     if configuration['clear_before_list']:
         call(['clear'])
 
-    # show server table (or list)
-    if configuration['display_view'] == 'table':
-        numColumns = 3
-    else:
-        numColumns = 1
-
-    list_servers(numColumns)
+    # list servers
+    list_servers(configuration['num_table_columns'])
