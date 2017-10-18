@@ -27,27 +27,36 @@ def get_configuration():
             exit(2)
 
 
+# return a list of all jsons found
+def get_json_files():
+    jsons = []
+    for dirpath, dirnames, files in os.walk(SERVERS_DIRECTORY):
+        for f in fnmatch.filter(files, '*.json'):
+            jsons.append(dirpath + '/' + f)
+
+    return sorted(jsons)
+
+
 # obtain the servers list
 def get_servers():
     i = 0
     servers = []
 
-    for dirpath, dirnames, files in os.walk(SERVERS_DIRECTORY):
-        for f in fnmatch.filter(files, '*.json'):
-            with open(dirpath + '/' + f, 'r') as data:
-                try:
-                    data = json.load(data)
-                except ValueError:
-                    print "Invalid json format"
-                    exit(2)
+    for f in get_json_files():
+        with open(f, 'r') as data:
+            try:
+                data = json.load(data)
+            except ValueError:
+                print "Invalid json format"
+                exit(2)
 
-            for k, block in enumerate(data):
-                for l, server in enumerate(block['servers']):
-                    i = i + 1
-                    if 'id' not in server:
-                        data[k]['servers'][l]['id'] = i
+        for k, block in enumerate(data):
+            for l, server in enumerate(block['servers']):
+                i = i + 1
+                if 'id' not in server:
+                    data[k]['servers'][l]['id'] = i
 
-            servers.append(data)
+        servers.append(data)
 
     return servers
 
