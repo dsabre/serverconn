@@ -34,7 +34,9 @@ Every server is defined by a json object, the most complex object is this:
 In the _config.json_ file you can modify the behavior of the program:
 - **num_table_columns**: identify the number of table columns for the server list,
 - **clear_before_list**: if true this will clear the console before show the servers list,
-- **clear_before_connect**: if true this will clear the console before connect to a server.
+- **clear_before_connect**: if true this will clear the console before connect to a server,
+- **fluent_operation**: if true, the program will request for a user choice directly when the server list is exposed,
+- **file_editor**: indicate the program editor to use for edit servers files.
 
 ## Usage
 Enter, via command line, in the directory of serverconn2 and type:

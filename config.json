@@ -2,5 +2,6 @@
 	"num_table_columns": 3,
 	"clear_before_list": true,
 	"clear_before_connect": true,
+	"fluent_operation": false,
 	"file_editor": "vi"
 }

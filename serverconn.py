@@ -21,15 +21,13 @@ if not os.path.isfile(CONFIGURATION_FILE_NAME):
     print CONFIGURATION_FILE_NAME + " not found"
     exit(1)
 
-
-# obtain the main configuration
-def get_configuration():
-    with open(CONFIGURATION_FILE_NAME, 'r') as config:
-        try:
-            return json.load(config)
-        except ValueError:
-            print "Invalid json format"
-            exit(2)
+configuration = {}
+with open(CONFIGURATION_FILE_NAME, 'r') as config:
+    try:
+        configuration = json.load(config)
+    except ValueError:
+        print "Invalid json format"
+        exit(2)
 
 
 # return a list of all jsons found
@@ -115,7 +113,9 @@ def list_servers(servers, numColumns):
         EDIT_COMMAND + " - Edit the selected servers file"
     ]))
 
-    print
+    if not configuration['clear_before_list']:
+        print
+
     subprocess_cmd('echo "' + ("\n".join(rows)) + '" |column -t -s"|" |sed "s/---//g"')
     print
 
@@ -127,6 +127,7 @@ def subprocess_cmd(command):
     print proc_stdout
 
 
+# execute a backup of the entire servers directory
 def backup_server_directory():
     # create the backup file name
     now = datetime.datetime.now()
@@ -141,6 +142,7 @@ def backup_server_directory():
     print
 
 
+# open a file for edit
 def edit_servers_file():
     print
     print "Select the file to edit:"
@@ -149,6 +151,8 @@ def edit_servers_file():
 
     for k, file in enumerate(files):
         print '[' + str(k + 1) + '] ' + file
+
+    print
 
     fileId = 0
     try:
@@ -164,22 +168,18 @@ def edit_servers_file():
         print "Invalid file number"
         exit(4)
 
-    call([get_configuration()['file_editor'], fileToEdit])
+    call([configuration['file_editor'], fileToEdit])
 
 
 # main actions
-configuration = get_configuration()
 servers = get_servers()
 
-# check if server files exists
-if len(servers) == 0:
-    print "No servers found"
-    exit(1)
 
-if len(sys.argv) == 2:
-    if sys.argv[1] == BACKUP_COMMAND:
+# execute the user selected operation
+def execute_operation(operation):
+    if operation == BACKUP_COMMAND:
         backup_server_directory()
-    elif sys.argv[1] == EDIT_COMMAND:
+    elif operation == EDIT_COMMAND:
         edit_servers_file()
     else:
         # launch a clear if necessary
@@ -187,7 +187,16 @@ if len(sys.argv) == 2:
             call(['clear'])
 
         # try to connect to given server
-        connect(servers, sys.argv[1])
+        connect(servers, operation)
+
+
+# check if server files exists
+if len(servers) == 0:
+    print "No servers found"
+    exit(1)
+
+if len(sys.argv) == 2:
+    execute_operation(sys.argv[1])
 else:
     # launch a clear if necessary
     if configuration['clear_before_list']:
@@ -195,3 +204,6 @@ else:
 
     # list servers
     list_servers(servers, configuration['num_table_columns'])
+
+    if configuration['fluent_operation']:
+        execute_operation(raw_input('Choice: '))
