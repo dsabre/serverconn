@@ -4,12 +4,17 @@ import json
 import os.path
 import sys
 import fnmatch
+import datetime
 import subprocess
 from subprocess import call
 
 DIR = os.path.dirname(__file__)
+SERVERS_DIR_NAME = 'servers'
+BACKUP_DIR_NAME = 'backups'
 SERVERS_DIRECTORY = DIR + "/servers"
 CONFIGURATION_FILE_NAME = DIR + "/config.json"
+BACKUP_COMMAND = 'b'
+EDIT_COMMAND = 'e'
 
 # check if config file exists
 if not os.path.isfile(CONFIGURATION_FILE_NAME):
@@ -103,6 +108,10 @@ def list_servers(servers, numColumns):
 
             rows.append("|".join(row))
 
+    # add the configuration section
+    rows.append("---\nConfiguration")
+    rows.append(BACKUP_COMMAND + " - Backup the servers directory|" + EDIT_COMMAND + " - Edit the selected servers file (future develop)")
+
     print
     subprocess_cmd('echo "' + ("\n".join(rows)) + '" |column -t -s"|" |sed "s/---//g"')
     print
@@ -115,6 +124,20 @@ def subprocess_cmd(command):
     print proc_stdout
 
 
+def backup_server_directory():
+    # create the backup file name
+    now = datetime.datetime.now()
+    nowString = '' + str(now.year) + str(now.month) + str(now.day) + str(now.hour) + str(now.minute) + str(now.second)
+    backupFilename = SERVERS_DIR_NAME + '_' + nowString + '.tar.gz'
+
+    # backup the servers
+    subprocess.Popen(['tar', 'pczf', BACKUP_DIR_NAME + '/' + backupFilename, 'servers'], cwd=DIR)
+
+    print
+    print "Backup created: " + DIR + "/" + BACKUP_DIR_NAME + "/" + backupFilename
+    print
+
+
 # main actions
 configuration = get_configuration()
 servers = get_servers()
@@ -125,12 +148,17 @@ if len(servers) == 0:
     exit(1)
 
 if len(sys.argv) == 2:
-    # launch a clear if necessary
-    if configuration['clear_before_connect']:
-        call(['clear'])
+    if sys.argv[1] == BACKUP_COMMAND:
+        backup_server_directory()
+    elif sys.argv[1] == EDIT_COMMAND:
+        print 'TODO: edit'
+    else:
+        # launch a clear if necessary
+        if configuration['clear_before_connect']:
+            call(['clear'])
 
-    # try to connect to given server
-    connect(servers, sys.argv[1])
+        # try to connect to given server
+        connect(servers, sys.argv[1])
 else:
     # launch a clear if necessary
     if configuration['clear_before_list']:
