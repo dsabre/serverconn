@@ -15,6 +15,7 @@ SERVERS_DIRECTORY = DIR + "/servers"
 CONFIGURATION_FILE_NAME = DIR + "/config.json"
 BACKUP_COMMAND = 'b'
 EDIT_COMMAND = 'e'
+EDIT_CONF_COMMAND = 'c'
 
 # check if config file exists
 if not os.path.isfile(CONFIGURATION_FILE_NAME):
@@ -83,7 +84,7 @@ def connect(servers, id):
         else:
             call(["ssh", server['host']])
     except TypeError:
-        print "Invalid server key"
+        print "Invalid command key"
         exit(3)
 
 
@@ -110,7 +111,8 @@ def list_servers(servers, numColumns):
     rows.append("---\nConfiguration")
     rows.append("|".join([
         BACKUP_COMMAND + " - Backup the servers directory",
-        EDIT_COMMAND + " - Edit the selected servers file"
+        EDIT_COMMAND + " - Edit the selected servers file",
+        EDIT_CONF_COMMAND + " - Edit the configuration file"
     ]))
 
     if not configuration['clear_before_list']:
@@ -142,7 +144,12 @@ def backup_server_directory():
     print
 
 
-# open a file for edit
+# open the configuration file for edit
+def edit_configuration_file():
+    call([configuration['file_editor'], CONFIGURATION_FILE_NAME])
+
+
+# open a servers file for edit
 def edit_servers_file():
     print
     print "Select the file to edit:"
@@ -181,7 +188,17 @@ def execute_operation(operation):
         backup_server_directory()
     elif operation == EDIT_COMMAND:
         edit_servers_file()
+    elif operation == EDIT_CONF_COMMAND:
+        edit_configuration_file()
     else:
+        try:
+            operation = int(operation)
+        except ValueError:
+            print
+            print "Invalid command key"
+            print
+            exit(3)
+
         # launch a clear if necessary
         if configuration['clear_before_connect']:
             call(['clear'])
