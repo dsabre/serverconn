@@ -110,7 +110,10 @@ def list_servers(servers, numColumns):
 
     # add the configuration section
     rows.append("---\nConfiguration")
-    rows.append(BACKUP_COMMAND + " - Backup the servers directory|" + EDIT_COMMAND + " - Edit the selected servers file (future develop)")
+    rows.append("|".join([
+        BACKUP_COMMAND + " - Backup the servers directory",
+        EDIT_COMMAND + " - Edit the selected servers file"
+    ]))
 
     print
     subprocess_cmd('echo "' + ("\n".join(rows)) + '" |column -t -s"|" |sed "s/---//g"')
@@ -138,6 +141,32 @@ def backup_server_directory():
     print
 
 
+def edit_servers_file():
+    print
+    print "Select the file to edit:"
+
+    files = get_json_files()
+
+    for k, file in enumerate(files):
+        print '[' + str(k + 1) + '] ' + file
+
+    fileId = 0
+    try:
+        fileId = int(raw_input('Enter the number of the file to edit: '))
+    except ValueError:
+        print "Invalid file number"
+        exit(4)
+
+    fileToEdit = ''
+    try:
+        fileToEdit = files[fileId - 1]
+    except IndexError:
+        print "Invalid file number"
+        exit(4)
+
+    call([get_configuration()['file_editor'], fileToEdit])
+
+
 # main actions
 configuration = get_configuration()
 servers = get_servers()
@@ -151,7 +180,7 @@ if len(sys.argv) == 2:
     if sys.argv[1] == BACKUP_COMMAND:
         backup_server_directory()
     elif sys.argv[1] == EDIT_COMMAND:
-        print 'TODO: edit'
+        edit_servers_file()
     else:
         # launch a clear if necessary
         if configuration['clear_before_connect']:
