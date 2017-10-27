@@ -2,6 +2,8 @@
 
 import json
 import os.path
+from os import listdir
+from os.path import isfile, join
 import sys
 import fnmatch
 import datetime
@@ -11,11 +13,14 @@ from subprocess import call
 DIR = os.path.dirname(__file__)
 SERVERS_DIR_NAME = 'servers'
 BACKUP_DIR_NAME = 'backups'
-SERVERS_DIRECTORY = DIR + "/servers"
+SERVERS_DIRECTORY = DIR + "/" + SERVERS_DIR_NAME
 CONFIGURATION_FILE_NAME = DIR + "/config.json"
+BACKUP_DATE_FORMAT = '%Y%m%d%H%M%S'
+BACKUP_EXTENSION = '.tar.gz'
 
 # commands definitions
 BACKUP_COMMAND = 'b'
+RESTORE_BACKUP_COMMAND = 'r'
 EDIT_COMMAND = 'e'
 EDIT_CONF_COMMAND = 'c'
 ADD_SERVER_COMMAND = 'a'
@@ -120,6 +125,7 @@ def list_servers(servers, numColumns):
 
     commands = {
         BACKUP_COMMAND: "Backup the servers directory",
+        RESTORE_BACKUP_COMMAND: "Restore a previous created backup",
         EDIT_COMMAND: "Edit the selected servers file",
         EDIT_CONF_COMMAND: "Edit the configuration file",
         ADD_SERVER_COMMAND: "Add server to file"
@@ -151,15 +157,36 @@ def subprocess_cmd(command):
 def backup_server_directory():
     # create the backup file name
     now = datetime.datetime.now()
-    nowString = '' + str(now.year) + str(now.month) + str(now.day) + str(now.hour) + str(now.minute) + str(now.second)
-    backupFilename = SERVERS_DIR_NAME + '_' + nowString + '.tar.gz'
+    backupFilename = SERVERS_DIR_NAME + '_' + (now.strftime(BACKUP_DATE_FORMAT)) + BACKUP_EXTENSION
 
     # backup the servers
-    subprocess.Popen(['tar', 'pczf', BACKUP_DIR_NAME + '/' + backupFilename, 'servers'], cwd=DIR)
+    subprocess.Popen(['tar', 'pczf', BACKUP_DIR_NAME + '/' + backupFilename, SERVERS_DIR_NAME], cwd=DIR)
 
     print
     print "Backup created: " + DIR + "/" + BACKUP_DIR_NAME + "/" + backupFilename
     print
+
+
+# restore a backup file
+def restore_backup_server_directory():
+    backupPath = DIR + "/" + BACKUP_DIR_NAME
+    files = [f for f in listdir(backupPath) if isfile(join(backupPath, f)) and fnmatch.fnmatch(f, '*' + BACKUP_EXTENSION)]
+
+    print
+    print "Enter the number of the backup to restore: "
+    print
+    for k, file in enumerate(files):
+        fileCreationDate = file.replace(BACKUP_EXTENSION, '').split('_')[1]
+        fileCreationDate = datetime.datetime.strptime(fileCreationDate, BACKUP_DATE_FORMAT)
+        fileCreationDate = fileCreationDate.strftime('%Y-%m-%d %H:%M:%S')
+
+        print '[' + str(k + 1) + '] ' + file + ' (created at: ' + fileCreationDate + ')'
+    print
+
+    backupId = int(raw_input('Backup id: ')) - 1
+
+    subprocess.Popen(['rm', '-rf', SERVERS_DIR_NAME], cwd=DIR)
+    subprocess.Popen(['tar', 'xf', BACKUP_DIR_NAME + '/' + files[backupId]], cwd=DIR)
 
 
 # open the configuration file for edit
@@ -300,6 +327,8 @@ servers = get_servers()
 def execute_operation(operation):
     if operation == BACKUP_COMMAND:
         backup_server_directory()
+    elif operation == RESTORE_BACKUP_COMMAND:
+        restore_backup_server_directory()
     elif operation == EDIT_COMMAND:
         edit_servers_file()
     elif operation == EDIT_CONF_COMMAND:
@@ -323,17 +352,18 @@ def execute_operation(operation):
         connect(servers, operation)
 
 
-# check if server files exists
-if len(servers) == 0:
-    print "No servers found"
-    exit(1)
-
 if len(sys.argv) > 1:
     execute_operation(sys.argv[1])
 else:
     # launch a clear if necessary
     if configuration['clear_before_list']:
         call(['clear'])
+
+    # check if server files exists
+    if len(servers) == 0:
+        print
+        print "No servers found"
+        print
 
     # list servers
     list_servers(servers, configuration['num_table_columns'])
