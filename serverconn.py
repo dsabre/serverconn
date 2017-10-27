@@ -13,9 +13,12 @@ SERVERS_DIR_NAME = 'servers'
 BACKUP_DIR_NAME = 'backups'
 SERVERS_DIRECTORY = DIR + "/servers"
 CONFIGURATION_FILE_NAME = DIR + "/config.json"
+
+# commands definitions
 BACKUP_COMMAND = 'b'
 EDIT_COMMAND = 'e'
 EDIT_CONF_COMMAND = 'c'
+ADD_SERVER_COMMAND = 'a'
 
 # check if config file exists
 if not os.path.isfile(CONFIGURATION_FILE_NAME):
@@ -41,18 +44,23 @@ def get_json_files():
     return sorted(jsons)
 
 
+# get the json data of a file
+def get_json_data_from_file(file):
+    with open(file, 'r') as data:
+        try:
+            return json.load(data)
+        except ValueError:
+            print "Invalid json format"
+            exit(2)
+
+
 # obtain the servers list
 def get_servers():
     i = 0
     servers = []
 
     for f in get_json_files():
-        with open(f, 'r') as data:
-            try:
-                data = json.load(data)
-            except ValueError:
-                print "Invalid json format"
-                exit(2)
+        data = get_json_data_from_file(f)
 
         for k, block in enumerate(data):
             for l, server in enumerate(block['servers']):
@@ -109,11 +117,21 @@ def list_servers(servers, numColumns):
 
     # add the configuration section
     rows.append("---\nConfiguration")
-    rows.append("|".join([
-        BACKUP_COMMAND + " - Backup the servers directory",
-        EDIT_COMMAND + " - Edit the selected servers file",
-        EDIT_CONF_COMMAND + " - Edit the configuration file"
-    ]))
+
+    commands = {
+        BACKUP_COMMAND: "Backup the servers directory",
+        EDIT_COMMAND: "Edit the selected servers file",
+        EDIT_CONF_COMMAND: "Edit the configuration file",
+        ADD_SERVER_COMMAND: "Add server to file"
+    }
+    row = []
+    for command, label in commands.items():
+        row.append(command + ' - ' + label)
+
+        if len(row) == numColumns:
+            rows.append(("\t" if numColumns == 1 else "") + ("|".join(row)))
+            row = []
+    rows.append("|".join(row))
 
     if not configuration['clear_before_list']:
         print
@@ -178,6 +196,102 @@ def edit_servers_file():
     call([configuration['file_editor'], fileToEdit])
 
 
+def add_server(args):
+    files = get_json_files()
+
+    # get the id of file where add the server
+    fileId = 0
+    try:
+        # try to get from command params
+        fileId = int(args[2])
+    except IndexError:
+        try:
+            print
+            print 'Enter the number of the file where you want to add the server: '
+
+            for k, file in enumerate(files):
+                print '[' + str(k + 1) + '] ' + file
+
+            fileId = int(raw_input('File id: '))
+        except ValueError:
+            print "Invalid file number"
+            exit(4)
+
+    # get the file to edit
+    fileToEdit = ''
+    try:
+        fileToEdit = files[fileId - 1]
+    except IndexError:
+        print "Invalid file number"
+        exit(4)
+
+    # get the id of the block where add the server
+    blockId = 0
+    data = get_json_data_from_file(fileToEdit)
+    try:
+        # try to get from command params
+        blockId = int(args[3])
+    except IndexError:
+        if len(data) > 1:
+            print
+            print 'Enter the number of the block where you want to add the server:'
+
+            for k, block in enumerate(data):
+                print '[' + str(k + 1) + '] ' + block['label']
+
+            blockId = int(raw_input('Block id: '))
+        else:
+            blockId = 0
+
+    # create the server object
+    newServer = {}
+
+    # get server host
+    host = None
+    hostArgIndex = 4
+    try:
+        # try to get from command params
+        host = args[hostArgIndex]
+    except IndexError:
+        while(not host):
+            host = raw_input('Host (required): ')
+    newServer['host'] = host
+
+    # get the optional parameters
+    optionalParameters = {
+        "id": 'Fixed id: ',
+        "alias": 'Alias: ',
+        "password": 'Password: ',
+    }
+    i = 1
+    for k, question in optionalParameters.items():
+        try:
+            # try to get from command params
+            value = args[hostArgIndex + i]
+        except IndexError:
+            value = raw_input(question)
+
+        if value:
+            newServer[k] = value
+
+        i = i + 1
+
+    # add server to others
+    data[blockId - 1]['servers'].append(newServer)
+
+    # transform data in a json
+    data = json.dumps(data, False, True, True, True, None, 4, None, 'utf-8', None, True)
+
+    # write data on file
+    file = open(fileToEdit, "w")
+    file.write(data)
+    file.close()
+
+    print
+    print "Server added correctly"
+    print
+
+
 # main actions
 servers = get_servers()
 
@@ -190,6 +304,8 @@ def execute_operation(operation):
         edit_servers_file()
     elif operation == EDIT_CONF_COMMAND:
         edit_configuration_file()
+    elif operation == ADD_SERVER_COMMAND:
+        add_server(sys.argv)
     else:
         try:
             operation = int(operation)
@@ -212,7 +328,7 @@ if len(servers) == 0:
     print "No servers found"
     exit(1)
 
-if len(sys.argv) == 2:
+if len(sys.argv) > 1:
     execute_operation(sys.argv[1])
 else:
     # launch a clear if necessary

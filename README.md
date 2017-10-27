@@ -41,12 +41,29 @@ In the _config.json_ file you can modify the behavior of the program:
 ## Usage
 Enter, via command line, in the directory of serverconn2 and type:
 
-To list all servers:
+**To list all servers:**
 ```commandline
 ./serverconn.py
 ```
+<br>
 
-To connect to a server:
+**To connect to a server:**
 ```commandline
 ./serverconn.py [SERVER_ID]
 ```
+<br>
+
+**To add a server to an existing file:**
+```commandline
+./serverconn.py a
+```
+If you want to pass all variables from params this is the order:
+```commandline
+./serverconn.py a [FILE_ID] [BLOCK_ID] [HOST] [ALIAS] [PASSWORD] [FIXED ID]
+```
+- **FILE_ID**: identify the file where to add the server, if you don't know what to type here use the command without parameters and see what is the correspondent file id
+- **BLOCK_ID**: identify the block in the file where to add the server, if you don't know what to type here use the command without parameters and see what is the correspondent block id
+- **HOST**: server host
+- **ALIAS**: server alias
+- **PASSWORD**: server password
+- **FIXED ID**: server fixed id
