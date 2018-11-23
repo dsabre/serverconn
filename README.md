@@ -6,7 +6,7 @@ Permit to connect via ssh, in command line, to a server stored in a "database" j
 cd /your/prefered/directory
 git clone https://github.com/raniel86/serverconn.git
 cd serverconn
-sudo git i -g
+sudo npm i -g
 ```
 
 ## Usage

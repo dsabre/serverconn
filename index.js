@@ -54,22 +54,27 @@ module.exports.getConfig = function(){
 module.exports.getServersFlatten = function(){
 	let key = 1;
 	return module.exports.getServersPath().then(serversPath =>{
-		const serversContent = JSON.parse(fs.readFileSync(serversPath).toString());
-		const categories     = Object.keys(serversContent);
-		let serversFlatten   = [];
-		
-		for(let i = 0; i < categories.length; i++){
-			const servers = serversContent[categories[i]];
+		try{
+			const serversContent = JSON.parse(fs.readFileSync(serversPath).toString());
+			const categories     = Object.keys(serversContent);
+			let serversFlatten   = [];
 			
-			for(let k = 0; k < servers.length; k++){
-				servers[k].id       = key++;
-				servers[k].category = categories[i];
+			for(let i = 0; i < categories.length; i++){
+				const servers = serversContent[categories[i]];
 				
-				serversFlatten.push(servers[k]);
+				for(let k = 0; k < servers.length; k++){
+					servers[k].id       = key++;
+					servers[k].category = categories[i];
+					
+					serversFlatten.push(servers[k]);
+				}
 			}
+			
+			return serversFlatten;
 		}
-		
-		return serversFlatten;
+		catch(e){
+			return [];
+		}
 	});
 };
 

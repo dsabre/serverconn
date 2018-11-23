@@ -50,7 +50,7 @@ index.getServersFlatten().then(serversFlatten =>{
 		}
 	}
 	else{
-		console.error('No servers found'.red);
+		console.error('No servers found, add a server with --add'.red);
 	}
 });
 
