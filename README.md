@@ -1,5 +1,5 @@
 # Serverconn
-Permit to connect via ssh, in command line, to a server stored in a "database" json files
+Permit to connect via ssh, in command line, to a server stored in a "database" json files.
 
 ## Installation
 ```bash
