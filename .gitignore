@@ -103,3 +103,4 @@ ENV/
 servers/*
 backups/*
 .idea
+/node_modules/
