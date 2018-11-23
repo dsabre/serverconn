@@ -1,0 +1,38 @@
+{
+  "name": "serverconn",
+  "version": "3.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "bin": {
+    "serverconn": "./index.js",
+    "sc": "./index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/raniel86/serverconn.git"
+  },
+  "keywords": [
+    "ssh",
+    "connection"
+  ],
+  "author": "Daniele Sabre",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/raniel86/serverconn/issues"
+  },
+  "homepage": "https://github.com/raniel86/serverconn#readme",
+  "dependencies": {
+    "cli-table": "^0.3.1",
+    "colors": "^1.3.2",
+    "file-system": "^2.2.2",
+    "minimist": "^1.2.0",
+    "open-in-editor": "^2.2.0",
+    "prompts": "^1.2.1",
+    "ssh2": "^0.6.1",
+    "ssh2-client": "^1.3.2",
+    "username": "^4.0.0"
+  }
+}
