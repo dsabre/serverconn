@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 const fs = require('file-system');
+const {execSync} = require('child_process');
 require('colors');
 
 const argv = require('minimist')(process.argv.slice(2));
@@ -61,15 +62,21 @@ module.exports.getServersFlatten = function(){
 			
 			for(let i = 0; i < categories.length; i++){
 				const servers = serversContent[categories[i]];
-				
+
 				for(let k = 0; k < servers.length; k++){
 					servers[k].id       = key++;
 					servers[k].category = categories[i];
-					
+
+					if (servers[k].password.match(/pass\((.*)\)/)) {
+						let passPath = servers[k].password.match(/pass\((.*)\)/)[1];
+
+						servers[k].password = (execSync('pass ' + passPath) + '').replace(/\n/g, '');
+					}
+
 					serversFlatten.push(servers[k]);
 				}
 			}
-			
+
 			return serversFlatten;
 		}
 		catch(e){
